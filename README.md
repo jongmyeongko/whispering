@@ -2,6 +2,10 @@
 
 Transcribe and translate speech from a microphone or computer output in real-time, based on the [faster-whisper](https://github.com/SYSTRAN/faster-whisper) module and Google translation service.
 
+> 📌 **이 포크의 추가 문서**
+> - [WINDOWS_SETUP.md](WINDOWS_SETUP.md) — 새 윈도우 PC 에서 내려받아 실행하는 가이드
+> - [CHANGES.md](CHANGES.md) — 원본 대비 변경 내역 (재현 가능한 상세 수정 내용)
+
 ## Requirements
 
 - Python 3.11+
