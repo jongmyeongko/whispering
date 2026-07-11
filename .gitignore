@@ -1,0 +1,11 @@
+.vscode/
+
+.venv/
+
+__pycache__/
+
+build/
+*.egg-info/
+
+# Windows "downloaded from the internet" metadata (created under WSL /mnt/c)
+*:Zone.Identifier
