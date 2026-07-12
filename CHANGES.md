@@ -1343,4 +1343,4 @@ fi
    - 실행 중 콘솔에 `saving transcript to: ...` 경로 출력, 전사 파일이 실시간 생성됨
    - Stop 시 미확정 문장까지 저장됨
    - `Split sentences` 버튼 → 저장 파일 선택 → `<원본>.sentences.txt` 생성
-   - `Auto-stop(min)` 을 1~120(기본 19) 으로 지정하면 해당 시간 후 자동 Stop, Stop 버튼에 남은 시간 카운트다운 표시
+   - `Auto-stop(min)` 을 1~120(기본 19) 으로 지정하면 해당 시간 후 자동 Stop, Stop 버튼 옆 전용 라벨에 남은 시간 카운트다운 표시
