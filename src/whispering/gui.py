@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import warnings
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -174,6 +175,11 @@ class App(tk.Tk):
         self.interval_label = ttk.Label(self.head_frame, text="Interval:")
         self.interval_spin = ttk.Spinbox(self.head_frame, from_=0.1, to=3.0, increment=0.1, state="readonly")
         self.interval_spin.set(3.0)
+        # Auto-stop timer: 0 = off, otherwise stop automatically after N minutes
+        # (10-minute steps, up to 2 hours). Only read when Start is pressed.
+        self.autostop_label = ttk.Label(self.head_frame, text="Auto-stop(min):")
+        self.autostop_spin = ttk.Spinbox(self.head_frame, from_=0, to=120, increment=10, state="readonly")
+        self.autostop_spin.set(0)
         self.mic_label.pack(side="left", padx=(5, 5))
         self.mic_combo.pack(side="left", padx=(0, 5))
         self.mic_button.pack(side="left", padx=(0, 5))
@@ -190,6 +196,8 @@ class App(tk.Tk):
         self.timeout_spin.pack(side="left", padx=(0, 5))
         self.interval_label.pack(side="left", padx=(5, 5))
         self.interval_spin.pack(side="left", padx=(0, 5))
+        self.autostop_label.pack(side="left", padx=(5, 5))
+        self.autostop_spin.pack(side="left", padx=(0, 5))
         self.source_label = ttk.Label(self.foot_frame, text="Source:")
         self.source_combo = ttk.Combobox(self.foot_frame, values=["auto"] + SOURCE_LANGUAGE_CODES, state="readonly")
         self.source_combo.current(0)
@@ -202,6 +210,11 @@ class App(tk.Tk):
             self.foot_frame, text="Split sentences", command=self.postprocess_file
         )
         self.control_button = ttk.Button(self.foot_frame)
+        # Auto-stop timer bookkeeping (scheduled with Tk's after()).
+        self._stop_cmd = None
+        self._autostop_after_id = None
+        self._countdown_after_id = None
+        self._stop_deadline = None
         self.on_stopped()
         self.source_label.pack(side="left", padx=(5, 5))
         self.source_combo.pack(side="left", padx=(0, 5))
@@ -253,12 +266,56 @@ class App(tk.Tk):
 
     def on_started(self, eng: STTEngine):
         def stop():
+            self._cancel_autostop()
             self.control_button.config(text="Stopping...", state="disabled")
             eng.stop()
 
+        self._stop_cmd = stop
         self.control_button.config(text="Stop", command=stop, state="normal")
 
+        # Schedule automatic stop if the Auto-stop timer is set (> 0 minutes).
+        try:
+            minutes = int(float(self.autostop_spin.get()))
+        except (TypeError, ValueError):
+            minutes = 0
+        if minutes > 0:
+            self._stop_deadline = time.monotonic() + minutes * 60
+            self._autostop_after_id = self.after(minutes * 60 * 1000, self._auto_stop)
+            print(f"[whispering] auto-stop scheduled in {minutes} minute(s)")
+            self._update_countdown()
+
+    def _auto_stop(self):
+        self._autostop_after_id = None
+        if self._stop_cmd is not None:
+            print("[whispering] auto-stop timer elapsed - stopping")
+            self._stop_cmd()
+
+    def _cancel_autostop(self):
+        if self._autostop_after_id is not None:
+            self.after_cancel(self._autostop_after_id)
+            self._autostop_after_id = None
+        if self._countdown_after_id is not None:
+            self.after_cancel(self._countdown_after_id)
+            self._countdown_after_id = None
+        self._stop_deadline = None
+
+    def _update_countdown(self):
+        self._countdown_after_id = None
+        if self._stop_deadline is None:
+            return
+        remaining = max(int(round(self._stop_deadline - time.monotonic())), 0)
+        # Only decorate the button while the Stop action is available.
+        if self.control_button.cget("text").startswith("Stop") and \
+                str(self.control_button.cget("state")) != "disabled":
+            h, rem = divmod(remaining, 3600)
+            m, s = divmod(rem, 60)
+            self.control_button.config(text=f"Stop ({h:d}:{m:02d}:{s:02d})")
+        if remaining > 0 and self._autostop_after_id is not None:
+            self._countdown_after_id = self.after(1000, self._update_countdown)
+
     def on_stopped(self, err: Exception | None = None):
+        self._cancel_autostop()
+        self._stop_cmd = None
         if err:
             print(err)
             # Startup failed before any end-of-stream marker was queued, so the
