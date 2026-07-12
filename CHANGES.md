@@ -871,7 +871,7 @@ def main() -> None:
 
 ### 3-10. 자동 종료 예약 (Auto-stop)
 
-Start 후 1분 단위(최대 120분, 기본 19분)로 자동 Stop 을 예약하고, Stop 버튼에 남은 시간을 카운트다운으로 표시합니다.
+Start 후 1분 단위(최대 120분, 기본 19분)로 자동 Stop 을 예약하고, Stop 버튼 옆 전용 라벨에 남은 시간을 카운트다운으로 표시합니다.
 
 **(a) `import time` 추가** — `gui.py` 상단 import 에 `import time` 을 포함합니다 (3-1 의 import 목록 기준 `sys` 다음).
 
@@ -899,9 +899,14 @@ import tkinter as tk
         self.autostop_spin.pack(side="left", padx=(0, 5))
 ```
 
-**(c) 타이머 상태 초기화** — `control_button` 생성 후 `self.on_stopped()` 호출 **전에** 추가합니다.
+**(c) 남은시간 라벨 + 타이머 상태 초기화** — foot_frame 의 `control_button` 생성 직전에 카운트다운 라벨을 만들고, 생성 후 `self.on_stopped()` 호출 **전에** 타이머 상태를 초기화합니다. 라벨은 `postprocess_button` 과 `control_button` 사이에 pack 합니다.
 
 ```python
+        # 위젯 정의
+        self.postprocess_button = ttk.Button(
+            self.foot_frame, text="Split sentences", command=self.postprocess_file
+        )
+        self.countdown_label = ttk.Label(self.foot_frame, text="")
         self.control_button = ttk.Button(self.foot_frame)
         # Auto-stop timer bookkeeping (scheduled with Tk's after()).
         self._stop_cmd = None
@@ -909,6 +914,9 @@ import tkinter as tk
         self._countdown_after_id = None
         self._stop_deadline = None
         self.on_stopped()
+
+        # pack (postprocess_button.pack 와 control_button.pack 사이)
+        self.countdown_label.pack(side="left", padx=(5, 5))
 ```
 
 **(d) `on_started` 에서 타이머 예약 + 헬퍼 메서드 추가**
@@ -948,18 +956,16 @@ import tkinter as tk
             self.after_cancel(self._countdown_after_id)
             self._countdown_after_id = None
         self._stop_deadline = None
+        self.countdown_label.config(text="")
 
     def _update_countdown(self):
         self._countdown_after_id = None
         if self._stop_deadline is None:
             return
         remaining = max(int(round(self._stop_deadline - time.monotonic())), 0)
-        # Only decorate the button while the Stop action is available.
-        if self.control_button.cget("text").startswith("Stop") and \
-                str(self.control_button.cget("state")) != "disabled":
-            h, rem = divmod(remaining, 3600)
-            m, s = divmod(rem, 60)
-            self.control_button.config(text=f"Stop ({h:d}:{m:02d}:{s:02d})")
+        h, rem = divmod(remaining, 3600)
+        m, s = divmod(rem, 60)
+        self.countdown_label.config(text=f"Auto-stop in {h:d}:{m:02d}:{s:02d}")
         if remaining > 0 and self._autostop_after_id is not None:
             self._countdown_after_id = self.after(1000, self._update_countdown)
 ```

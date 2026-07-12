@@ -209,6 +209,7 @@ class App(tk.Tk):
         self.postprocess_button = ttk.Button(
             self.foot_frame, text="Split sentences", command=self.postprocess_file
         )
+        self.countdown_label = ttk.Label(self.foot_frame, text="")
         self.control_button = ttk.Button(self.foot_frame)
         # Auto-stop timer bookkeeping (scheduled with Tk's after()).
         self._stop_cmd = None
@@ -223,6 +224,7 @@ class App(tk.Tk):
         self.prompt_label.pack(side="left", padx=(5, 5))
         self.prompt_entry.pack(side="left", padx=(0, 5), fill="x", expand=True)
         self.postprocess_button.pack(side="left", padx=(5, 5))
+        self.countdown_label.pack(side="left", padx=(5, 5))
         self.control_button.pack(side="left", padx=(5, 5))
 
     def mic_combo_refresh(self):
@@ -298,18 +300,16 @@ class App(tk.Tk):
             self.after_cancel(self._countdown_after_id)
             self._countdown_after_id = None
         self._stop_deadline = None
+        self.countdown_label.config(text="")
 
     def _update_countdown(self):
         self._countdown_after_id = None
         if self._stop_deadline is None:
             return
         remaining = max(int(round(self._stop_deadline - time.monotonic())), 0)
-        # Only decorate the button while the Stop action is available.
-        if self.control_button.cget("text").startswith("Stop") and \
-                str(self.control_button.cget("state")) != "disabled":
-            h, rem = divmod(remaining, 3600)
-            m, s = divmod(rem, 60)
-            self.control_button.config(text=f"Stop ({h:d}:{m:02d}:{s:02d})")
+        h, rem = divmod(remaining, 3600)
+        m, s = divmod(rem, 60)
+        self.countdown_label.config(text=f"Auto-stop in {h:d}:{m:02d}:{s:02d}")
         if remaining > 0 and self._autostop_after_id is not None:
             self._countdown_after_id = self.after(1000, self._update_countdown)
 
