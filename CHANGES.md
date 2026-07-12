@@ -19,7 +19,7 @@
 | 7 | 전사 결과 파일 자동 저장(확정 실시간 + Stop 시 미확정 포함) | `gui.py` |
 | 8 | 저장 파일 문장 단위 줄바꿈 후처리 기능 | `gui.py` |
 | 9 | 실행/배포 스크립트 (신규 파일) | `run.sh`, `run.bat`, `deploy-to-windows.sh` |
-| 10 | 자동 종료 예약(10분 단위, 최대 2시간) + 남은시간 카운트다운 | `gui.py` |
+| 10 | 자동 종료 예약(1분 단위, 최대 2시간, 기본 19분) + 남은시간 카운트다운 | `gui.py` |
 
 > 참고: `src/whispering/core/engine.py` 는 **수정하지 않았습니다**. (`sample_time` 은 원본부터 존재하던 인자라 GUI 배선만 필요했습니다.)
 
@@ -871,7 +871,7 @@ def main() -> None:
 
 ### 3-10. 자동 종료 예약 (Auto-stop)
 
-Start 후 10분 단위(최대 120분)로 자동 Stop 을 예약하고, Stop 버튼에 남은 시간을 카운트다운으로 표시합니다.
+Start 후 1분 단위(최대 120분, 기본 19분)로 자동 Stop 을 예약하고, Stop 버튼에 남은 시간을 카운트다운으로 표시합니다.
 
 **(a) `import time` 추가** — `gui.py` 상단 import 에 `import time` 을 포함합니다 (3-1 의 import 목록 기준 `sys` 다음).
 
@@ -889,10 +889,10 @@ import tkinter as tk
 ```python
         # 위젯 정의 (interval_spin 뒤)
         # Auto-stop timer: 0 = off, otherwise stop automatically after N minutes
-        # (10-minute steps, up to 2 hours). Only read when Start is pressed.
+        # (1-minute steps, up to 2 hours). Only read when Start is pressed.
         self.autostop_label = ttk.Label(self.head_frame, text="Auto-stop(min):")
-        self.autostop_spin = ttk.Spinbox(self.head_frame, from_=0, to=120, increment=10, state="readonly")
-        self.autostop_spin.set(0)
+        self.autostop_spin = ttk.Spinbox(self.head_frame, from_=0, to=120, increment=1, state="readonly")
+        self.autostop_spin.set(19)
 
         # pack (interval_spin.pack 뒤)
         self.autostop_label.pack(side="left", padx=(5, 5))
@@ -1337,4 +1337,4 @@ fi
    - 실행 중 콘솔에 `saving transcript to: ...` 경로 출력, 전사 파일이 실시간 생성됨
    - Stop 시 미확정 문장까지 저장됨
    - `Split sentences` 버튼 → 저장 파일 선택 → `<원본>.sentences.txt` 생성
-   - `Auto-stop(min)` 을 10~120 으로 지정하면 해당 시간 후 자동 Stop, Stop 버튼에 남은 시간 카운트다운 표시
+   - `Auto-stop(min)` 을 1~120(기본 19) 으로 지정하면 해당 시간 후 자동 Stop, Stop 버튼에 남은 시간 카운트다운 표시

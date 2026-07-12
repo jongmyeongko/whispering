@@ -176,10 +176,10 @@ class App(tk.Tk):
         self.interval_spin = ttk.Spinbox(self.head_frame, from_=0.1, to=3.0, increment=0.1, state="readonly")
         self.interval_spin.set(3.0)
         # Auto-stop timer: 0 = off, otherwise stop automatically after N minutes
-        # (10-minute steps, up to 2 hours). Only read when Start is pressed.
+        # (1-minute steps, up to 2 hours). Only read when Start is pressed.
         self.autostop_label = ttk.Label(self.head_frame, text="Auto-stop(min):")
-        self.autostop_spin = ttk.Spinbox(self.head_frame, from_=0, to=120, increment=10, state="readonly")
-        self.autostop_spin.set(0)
+        self.autostop_spin = ttk.Spinbox(self.head_frame, from_=0, to=120, increment=1, state="readonly")
+        self.autostop_spin.set(19)
         self.mic_label.pack(side="left", padx=(5, 5))
         self.mic_combo.pack(side="left", padx=(0, 5))
         self.mic_button.pack(side="left", padx=(0, 5))
